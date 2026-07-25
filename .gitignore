@@ -3,3 +3,9 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 *.deb
+
+# regenerable heavy caches / logs (rebuild via demo_pb2 scripts in-container)
+demo_pb2/corpus_v13.npz
+demo_pb2/corpus_v13_first*.npz
+demo_pb2/*.log
+demo_pb2/_tmp.wav
