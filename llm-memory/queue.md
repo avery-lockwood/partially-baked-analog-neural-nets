@@ -1,5 +1,32 @@
 # What's next
 
+## ACTIVE WORKSTREAM (set 2026-07-25): scaled demo + paper
+Avery's current priority — see `60_demo_and_paper_goals.md` in the project
+root for the full spec. Ordered:
+1. Get the Docker container (`analog-nn-dev`) reachable — blocked on
+   `sudo usermod -aG docker avery` + shell group refresh (see
+   environment.md). All heavy runs go through the container.
+2. Scale the talking-clock corpus 36 → full natural-time space (~720
+   utterances, natural phrasings). Cache analyzed LPC frames to .npz so
+   network iteration is cheap (corpus gen is the expensive part on the weak
+   Ryzen 3).
+3. Retrain the baked core on the large corpus; measure spectrogram fidelity
+   vs. corpus size — this scaling curve is the headline paper figure (does
+   the fixed baked core generalize or saturate?).
+4. RC-causal streaming front end (v10 path) on the large corpus.
+5. New interactive web viewer (clock face + charge flow + audio) for the
+   website, extending build_viewer.py / chip_viewer.html.
+6. `70_literature_validation.md`: map each sim assumption (5% fab noise, 16
+   write levels, drift, IR) and each headline result to a citable number
+   from published analog-IMC / memristor / printed-electronics / LPC
+   literature, stating honestly where our numbers are optimistic. This is
+   the paper's "validation citing other papers" requirement.
+
+The v4-v12 investigation queue below is still valid but now secondary to the
+demo/paper push unless Avery redirects.
+
+---
+
 Condensed from `50_investigation_queue.md` — check that file for full detail
 before starting anything; this is a priority-ordered pointer, not the full
 spec.

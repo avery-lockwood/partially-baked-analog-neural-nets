@@ -4,6 +4,15 @@ Full numbers live in `10_findings_v2.md`; this is the fast-scan status
 table. When a new session lands (v13+), update this file — don't let it
 drift from 00_CRITICAL.
 
+## ACTIVE WORKSTREAM (started 2026-07-25 evening): scaled demo + paper
+Avery redirected to building a bigger, more complex TTS-chip demo for her
+website, feeding a paper (sim methods + literature-cited validation + live
+demo). Target: "PB-2 / demo v13" — full natural-time talking clock (~720
+utterances vs v7's 36). Spec + task list: `60_demo_and_paper_goals.md`
+(project root) and `queue.md` (this folder). Runs go through the Docker
+container `analog-nn-dev`. This is now the top priority; the v4-v12
+investigation queue is secondary unless she redirects.
+
 ## Finding status
 | # | one-line | status |
 |---|---|---|

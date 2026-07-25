@@ -22,8 +22,11 @@ else
     echo "docker already present: $(docker --version)"
 fi
 
-echo "== Adding $(whoami) to the docker group =="
-sudo usermod -aG docker "$(whoami)"
+# Target the real invoking user even if this script was run with a `sudo`
+# prefix (in which case $(whoami) would wrongly resolve to root).
+TARGET_USER="${SUDO_USER:-$(whoami)}"
+echo "== Adding $TARGET_USER to the docker group =="
+sudo usermod -aG docker "$TARGET_USER"
 
 echo "== Building the project image =="
 sudo docker build -t "$IMAGE_NAME" -f "$DOCKER_DIR/Dockerfile" "$DOCKER_DIR"

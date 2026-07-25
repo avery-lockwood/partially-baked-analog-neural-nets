@@ -1,5 +1,14 @@
 # Project overview
 
+**Current end goal (set 2026-07-25):** three deliverables — (1) a paper with
+sim methods + validation that cites data from other published papers + a
+working demo; (2) a bigger, more complex TTS-chip demo for Avery's website
+(averyazalea.com); (3) a real physical build path. The active workstream is
+the scaled demo "PB-2 / demo v13" (full natural-time talking clock, ~720
+utterances vs the v7 36). **Full detail: `60_demo_and_paper_goals.md` in the
+project root — read it before starting demo/paper work.** See `queue.md`
+here for the ordered task list.
+
 **What this is:** simulation-based design-space exploration (DSE) of hybrid
 fixed(baked)/programmable analog neural networks — i.e., analog NN hardware
 where most weights are permanently fabricated ("baked") and a small fraction
