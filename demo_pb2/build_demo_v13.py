@@ -116,6 +116,10 @@ def main():
         tag = f"{h:02d}{mm:02d}"
         O = v7.td_forward(m, Wn, X, v7.R_LEVELS, np.random.default_rng(7), ceil, b3)
         v7.write_wav(f"demo_audio/{tag}_chipA.wav", v7.synth_lpc(v7.from_outputs(O)))
+        # software-ideal: the trained network with no analog noise (isolates the
+        # analog-hardware penalty = the chipA-vs-float gap)
+        Of = m.forward(X)[-1]
+        v7.write_wav(f"demo_audio/{tag}_float.wav", v7.synth_lpc(v7.from_outputs(Of)))
         v7.write_wav(f"demo_audio/{tag}_ceiling.wav", v7.synth_lpc(F))
         if u["audio"] is not None:
             y = u["audio"]

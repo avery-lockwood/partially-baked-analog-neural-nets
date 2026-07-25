@@ -22,7 +22,7 @@ data = json.load(open("demo_v13_data.json"))
 # inline every showcase utterance's three voices as base64 wavs
 wavs = {}
 for u in data["utterances"]:
-    for voice in ("chipA", "ceiling", "original"):
+    for voice in ("chipA", "float", "ceiling", "original"):
         p = f"demo_audio/{u['tag']}_{voice}.wav"
         if os.path.exists(p):
             wavs[f"{u['tag']}_{voice}"] = base64.b64encode(open(p, "rb").read()).decode()
@@ -85,13 +85,15 @@ footer b{color:var(--ink);font-weight:500}
 <p class="sub">One printed analog chip speaks any time of day. Layers L1/L2 are
 <b>baked</b> (fixed printed-resistor crossbars, shared by every utterance);
 only the small L3 <b>memristor head</b> is programmable and is calibrated
-per-chip. Pick a time — the chip says it while charge flows through the die.
+per-chip. Pick a time — the chip says it while you watch <b>current heat the
+devices it flows through</b> and charge collect on the bitline capacitors.
 LPC-10 vocoder output (TMS5100 / Speak&amp;Spell lineage), time-domain, no ADC
 in the signal path.</p>
 <div class="bar">
  <button class="play" id="play">▶ speak</button>
  <span style="color:var(--dim)">voice:</span>
  <button class="src" data-k="chipA" aria-pressed="true">baked chip</button>
+ <button class="src" data-k="float" aria-pressed="false">software ideal</button>
  <button class="src" data-k="ceiling" aria-pressed="false">LPC ceiling</button>
  <button class="src" data-k="original" aria-pressed="false">MBROLA teacher</button>
  <span class="readout">“<span id="txt"></span>” · <span class="ph" id="curph"></span></span>
@@ -114,11 +116,14 @@ in the signal path.</p>
   <h2>LPC output · 10 ms frame</h2>
   <div id="meters"></div>
   <div class="legend">
-   <div><span class="sw" style="background:var(--copper)"></span>baked G+ (printed)</div>
-   <div><span class="sw" style="background:var(--oxide)"></span>baked G− (return)</div>
-   <div><span class="sw" style="background:var(--mem)"></span>programmable memristor</div>
-   <div><span class="sw" style="background:var(--pulse)"></span>active charge path</div>
-   <div style="margin-top:7px">cell brightness ∝ conductance;<br>row glow ∝ input pulse width;<br>column bar ∝ integrated charge.</div>
+   <div><span class="sw" style="background:var(--copper)"></span>baked layer (printed R)</div>
+   <div><span class="sw" style="background:var(--mem)"></span>memristor head</div>
+   <div><span class="sw" style="background:var(--pulse)"></span>current flowing now</div>
+   <div style="margin-top:8px">cell brightness = <b>current through that
+   device this instant</b> (active input row × its conductance) — dark = no
+   charge there.<br><br>bottom bars = <b>bitline capacitors</b> filling with
+   the integrated charge ∫i·dt = that neuron's value; one tile's caps drive
+   the next tile's rows.</div>
   </div>
  </aside>
 </main>
@@ -127,11 +132,15 @@ in the signal path.</p>
 resistor crossbars, drawn once) drives every time on the clock; only the
 32×<span id="nout"></span> memristor head is programmable (≈5% of weights) and
 is write-verify calibrated to this individual chip. Trained on the full
-720-minute corpus. “Baked chip” is the simulated analog output; “LPC ceiling”
-is the vocoder with ideal coefficients; “MBROLA teacher” is the speech the
-chip learned from. Fidelity holds across the whole clock — the fixed core does
-not saturate as the vocabulary grows. Simulation; see the paper for methods
-and literature validation.
+720-minute corpus. Voices, worst→best reference: <b>baked chip</b> = the
+trained chip in imperfect analog hardware (what you'd build); <b>software
+ideal</b> = same trained network with no analog noise (the gap to it is the
+analog-hardware penalty); <b>LPC ceiling</b> = the vocoder on perfect
+coefficients (no chip at all — the codec's own limit); <b>MBROLA teacher</b>
+= the speech the chip learned from. The die animation always shows the
+physical baked chip. Fidelity holds across the whole clock — the fixed core
+does not saturate as the vocabulary grows. Simulation; see the paper for
+methods and literature validation.
 </footer>
 <script>
 const D=__DATA__, WAV=__WAV__;
@@ -151,45 +160,54 @@ const tiles=[];{let x=58;
   tiles.push(t); x+=t.w+78;});}
 function hexA(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),
  b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
-function cellColor(w,max,baked){const a=Math.min(1,Math.abs(w)/max);
- const base=baked?(w>=0?C.copper:C.oxide):C.mem;return hexA(base,0.14+0.86*a*a);}
+function rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function mixA(h1,h2,t,a){const x=rgb(h1),y=rgb(h2);
+ return`rgba(${Math.round(x[0]+(y[0]-x[0])*t)},${Math.round(x[1]+(y[1]-x[1])*t)},${Math.round(x[2]+(y[2]-x[2])*t)},${a})`;}
+// current density 0..1 through one device THIS frame -> colour. At rest the
+// cell is a barely-visible tile tint (dark); as charge flows it heats toward
+// cream. This is the "where is the charge right now" map.
+function heat(base,cu){if(cu<0.02)return hexA(base,0.05);
+ const t=Math.min(1,cu);return mixA(base,C.pulse,Math.pow(t,0.55),0.16+0.84*Math.pow(t,0.7));}
 
 let U=null, N=0, dash=0, cur=-1;
 function draw(f){
  cx.fillStyle=C.panel;cx.fillRect(0,0,cv.width,cv.height);
  if(!U)return;
- const fr=U.frames, acts=[null,fr.a1[f],fr.a2[f],fr.out[f]];
- const rowIn=[fr.input[f].reduce((m,i)=>(m[i]=1,m),{}),fr.a1[f],fr.a2[f]];
+ const fr=U.frames, inMap={};fr.input[f].forEach(i=>inMap[i]=1);
+ const drive=[inMap,fr.a1[f],fr.a2[f]];          // what drives each tile's rows
+ const dCeil=[1,D.ceilings[0],D.ceilings[1]];
+ const col=[fr.a1[f],fr.a2[f],fr.out[f]];         // charge collected on each bitline
  tiles.forEach((t,k)=>{
   cx.strokeStyle=C.line;cx.strokeRect(t.x-1,t.y-1,t.w+2,t.h+2);
   cx.fillStyle=C.dim;cx.font='10px ui-monospace,monospace';cx.fillText(t.name,t.x,t.y-8);
-  for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
-   cx.fillStyle=cellColor(t.W[r][c],t.max,t.baked);
-   cx.fillRect(t.x+c*t.cw,t.y+r*t.ch,t.cw-0.7,t.ch-0.7);}
-  const ceil=k===0?1:D.ceilings[k-1];
+  const base=t.baked?C.copper:C.mem;
+  // per-device current = (active input on its row) x (its conductance)
   for(let r=0;r<t.rows;r++){
-   const v=k===0?(rowIn[0][r]||0):Math.min(1,rowIn[k][r]/ceil);
-   if(v>0.02){cx.strokeStyle=hexA(C.pulse,0.15+0.75*v);
-    cx.lineWidth=k===0?1.3:1+2*v;
-    cx.setLineDash(motion?[6,5]:[]);cx.lineDashOffset=-dash;
-    cx.beginPath();cx.moveTo(t.x-34,t.y+r*t.ch+t.ch/2);
-    cx.lineTo(t.x+t.w,t.y+r*t.ch+t.ch/2);cx.stroke();cx.setLineDash([]);}}
-  const out=acts[k+1],oc=D.ceilings[k];
+   const dr=k===0?(drive[0][r]||0):Math.min(1,drive[k][r]/dCeil[k]);
+   const y=t.y+r*t.ch;
+   for(let c=0;c<t.cols;c++){
+    cx.fillStyle=heat(base,dr*Math.abs(t.W[r][c])/t.max);
+    cx.fillRect(t.x+c*t.cw,y,t.cw-0.7,t.ch-0.7);}}
+  // bitline capacitors filling with integrated charge (= the neuron value)
+  const oc=D.ceilings[k],bh=42;
   for(let c=0;c<t.cols;c++){
-   const q=Math.min(1,Math.max(0,out[c]/oc)),bx=t.x+c*t.cw,by=t.y+t.h+6;
-   cx.fillStyle='#120b05';cx.fillRect(bx,by,t.cw-0.7,36);
-   cx.fillStyle=hexA(k===2?C.mem:C.copper,0.35+0.65*q);cx.fillRect(bx,by+36-36*q,t.cw-0.7,36*q);}
-  cx.fillStyle=C.dim;cx.font='9px ui-monospace,monospace';cx.fillText('∫ i dt',t.x,t.y+t.h+56);
+   const q=Math.min(1,Math.max(0,col[k][c]/oc)),bx=t.x+c*t.cw,by=t.y+t.h+8;
+   cx.fillStyle='#0d0805';cx.fillRect(bx,by,t.cw-0.7,bh);
+   cx.fillStyle=mixA(base,C.pulse,q*0.55,0.32+0.68*q);cx.fillRect(bx,by+bh-bh*q,t.cw-0.7,bh*q);
+   cx.strokeStyle=hexA(base,0.3);cx.strokeRect(bx+0.3,by+0.3,t.cw-1.3,bh-0.6);}
+  cx.fillStyle=C.dim;cx.font='9px ui-monospace,monospace';cx.fillText('∫ i dt · bitline caps',t.x,t.y+t.h+66);
+  // charge leaving charged columns feeds the next tile's rows
   if(k<2){const nt=tiles[k+1];
-   for(let c=0;c<t.cols;c++){const v=Math.min(1,acts[k+1][c]/oc);if(v<0.03)continue;
-    const r=c%nt.rows;cx.strokeStyle=hexA(C.pulse,0.06+0.5*v);cx.lineWidth=1;
-    cx.beginPath();cx.moveTo(t.x+c*t.cw+t.cw/2,t.y+t.h+42);
-    cx.bezierCurveTo(t.x+t.w+54,t.y+t.h+42,nt.x-56,nt.y+r*nt.ch+nt.ch/2,nt.x-42,nt.y+r*nt.ch+nt.ch/2);
-    cx.stroke();}}});
+   for(let c=0;c<t.cols;c++){const q=Math.min(1,col[k][c]/oc);if(q<0.05)continue;
+    const r=c%nt.rows;cx.strokeStyle=hexA(C.pulse,0.05+0.4*q);cx.lineWidth=0.8+1.5*q;
+    cx.setLineDash(motion?[5,6]:[]);cx.lineDashOffset=-dash;
+    cx.beginPath();cx.moveTo(t.x+c*t.cw+t.cw/2,t.y+t.h+8+bh);
+    cx.bezierCurveTo(t.x+t.w+54,t.y+t.h+8+bh,nt.x-54,nt.y+r*nt.ch+nt.ch/2,nt.x-40,nt.y+r*nt.ch+nt.ch/2);
+    cx.stroke();cx.setLineDash([]);}}});
  const t3=tiles[2];cx.strokeStyle=hexA(C.mem,0.8);cx.lineWidth=2;
  cx.strokeRect(t3.x-1,t3.y-1,t3.w+2,t3.h+2);
  cx.fillStyle=C.mem;cx.font='9px ui-monospace,monospace';
- cx.fillText('write-verify bus',t3.x,t3.y+t3.h+70);
+ cx.fillText('write-verify bus',t3.x,t3.y+t3.h+80);
 }
 // ---- meters ----
 const mDiv=document.getElementById('meters');
