@@ -34,3 +34,18 @@ were appended to `~/.bashrc`. If another tool is needed and normal
 `apt-get install` fails the same way, the same download+extract pattern
 should work as long as the package doesn't need a postinst script or
 setuid bits.
+
+## Docker dev container (2026-07-25) — the real fix for the no-root problem
+Set up a persistent CPU-only Docker container (`analog-nn-dev`) for running
+notebooks/scripts in this project, specifically to route around the no-sudo
+problem above. See `.docker/README.md` in the project root for day-to-day
+usage. Host specs: AMD Ryzen 3 2200G (4 cores, weak), 32GB RAM, GTX 1070
+GPU (currently on the `nouveau` driver — no CUDA yet; switching to the
+proprietary driver + wiring `--gpus all` into the container is a deferred,
+separate step since it needs a reboot). Once the container is running,
+Claude should do `docker exec analog-nn-dev ...` for python/jupyter work in
+this project rather than running things directly on the host — no root
+workarounds needed inside the container. `.docker/setup_docker.sh` has to
+be run by Avery herself (needs an interactive sudo password); after it
+runs she needs to log out/in (or `newgrp docker`) for her (and Claude's)
+shell to pick up passwordless docker access.
