@@ -178,11 +178,12 @@ handled separately as the only input-dependent term.
   programmable edges its effect is ≈0.
 - **Drift (F4, thinned; extended by v13).** Only the 0% vs 68.8% frozen
   contrast survived the paired protocol in v4. The v13 re-run with the
-  physical t^−ν model on the PB-2 head: uncompensated spectrogram
-  correlation 0.90→0.79 over 12 weeks; a single global gain rescale recovers
-  most (drift is largely common-mode); head write-verify recalibration
-  resets to fresh. The baked core is drift-free by construction — that is
-  the point of the law. (Single seed still; error bars queued.)
+  physical t^−ν model on the PB-2 head (8 seeds, paired per-seed deltas,
+  §11): uncompensated spectrogram correlation declines −0.021 ± 0.015 over
+  12 weeks (worst seed −0.048), monotone in every seed; a single global
+  gain rescale recovers ~70% (drift is largely common-mode); head
+  write-verify recalibration resets to fresh. The baked core is drift-free
+  by construction — that is the point of the law.
 
 ## 5. Input/output schemes — killing the ADC/DAC tax (F10)
 
@@ -517,20 +518,43 @@ axis (36 → 720 utterances).
 calibration) → 13 pulse-width outputs → all-pole lattice synthesis. No ADC
 in the signal path; R=32.
 
-**Headline scaling result (v13):** with the architecture *fixed*, growing
-the corpus 36→612 training utterances (full 720-minute natural-English time
-space, 29 phones, 127k frames): float ceiling improves monotonically
-(k-RMSE 0.0768→0.0594, −23%) while chip error stays flat (~0.084, no upward
-trend; chip B likewise) and spectrogram fidelity holds ~0.88 (0.919 at full
-scale). **The fixed baked core does not saturate** — the bounded cost is
-head-calibration/quantization precision (a fixed additive overhead), not
+**Headline scaling result (v13, 8 seeds ×  per-seed train/test splits,
+95% CI):** with the architecture *fixed*, growing the corpus 36→612
+training utterances (full 720-minute natural-English time space, 29 phones,
+127k frames): float ceiling improves monotonically (k-RMSE 0.0793 ± 0.0016
+→ 0.0600 ± 0.0012, −24%) while chip error never trends upward (chip A
+0.0933 ± 0.0022 → 0.0841 ± 0.0029; chip B statistically identical) and
+spectrogram fidelity holds at 0.85 ± 0.04 across the sweep (40-utterance
+mel sample). **The fixed baked core does not saturate** — the bounded cost
+is head-calibration/quantization precision (a fixed additive overhead), not
 core capacity. One physical chip speaks the entire clock.
 
-**Drift made audible (v13):** physical t^−ν on the head only: 0.90→0.79
-uncompensated over 12 weeks; global gain rescale recovers most;
-recalibration resets. Baked core immune by construction. (Single seed;
-multi-seed error bars are the last step before these figures are
-paper-grade.)
+![Scaling with 8-seed 95% CI bands](paper_figures/fig_scaling.png)
+*Fig. S — (a) Float ceiling improves with corpus size while both simulated
+chips track a flat, bounded offset above it. (b) Chip-A speech fidelity
+holds ~0.85 across a 17× corpus growth. 8 seeds, per-seed splits and fab
+draws, 95% CI.*
+
+**Drift (v13, 8 seeds, paired per-seed deltas):** physical t^−ν on the
+head only, one fixed per-device ν draw per seed (ν ~ N(0.06, 0.012)).
+Uncompensated fidelity declines monotonically in every seed: Δmel-corr
+−0.012 ± 0.011 at week 1 and −0.021 ± 0.015 at week 12 (worst seed −0.048);
+a single global gain rescale recovers ~70% (−0.006 ± 0.015 at week 12);
+head recalibration resets exactly. Baked core immune by construction.
+*Correction vs the earlier single-seed series:* the previously reported
+0.90→0.79 drop redrew per-device ν independently at every week point,
+conflating device-draw variance with aging, and landed on a tail draw —
+the paired multi-seed estimate above is the defensible number, and it is
+milder (the head is only ~5% of weights; there is simply not much drift
+surface). The demo audio renders per-seed worst cases, which remain
+audible.
+
+![Drift with 8-seed 95% CI bands](paper_figures/fig_drift.png)
+*Fig. D — Change in mel-spectrogram correlation vs week 0 (paired within
+seed). Every seed declines monotonically without compensation; one global
+gain scalar recovers most of it; write-verify recalibration resets to
+fresh. The baked core does not appear in this figure because nothing in it
+drifts.*
 
 **Hardware path (PB-1 rev A):** 140×180 mm 4-layer FR-4; differential
 carbon-resistor planes (G⁺/prepreg/G⁻) joined per-bitline by vias; Cu
@@ -552,8 +576,9 @@ baked core stays frozen).
 ## 12. Honest limitations ledger
 
 Toy tasks (8×8 digits, 24-word vocab, clock-domain speech); v13
-scaling/drift curves are single-seed (multi-seed CIs queued, the top
-pre-submission task); fixed train/test split in the classification studies;
+scaling/drift curves now carry 8-seed 95% CIs with per-seed train/test
+splits (seeds_v13), but the classification studies (v4–v11) remain
+fixed-split;
 AIHWKit CRN cross-validation port not yet run (all v4–v12 statistics
 numpy-side); energy constants order-of-magnitude and digital baselines
 exclude their own I/O; no standardized intelligibility test (mel-spec
@@ -571,8 +596,8 @@ charges inter-tile wordline routing to wire length, not to the nodal solve.
 
 ## 13. Pre-submission checklist
 
-1. Multi-seed error bars: scaling curve + drift table (~8 seeds, wider
-   mel-eval sample).
+1. ~~Multi-seed error bars~~ DONE (seeds_v13: 8 seeds, per-seed splits,
+   40-utt mel sample; Figs. S and D; drift magnitude corrected — see §11).
 2. Human verification of every citation in 70_literature_validation
    (subagent-gathered; URLs/DOIs must be checked by hand).
 3. AIHWKit CRN port (P0 #1) for the ratio-study cross-check.

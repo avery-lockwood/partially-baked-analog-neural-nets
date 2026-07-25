@@ -295,28 +295,29 @@ def fig_scaling():
                 = fnum(r[col])
         return g
 
-    fig, axs = plt.subplots(1, 2, figsize=(9.2, 3.5))
+    tick_sizes = [s for s in sizes if s != 480]   # 480/612 labels collide
+    fig, axs = plt.subplots(1, 2, figsize=(9.6, 3.5), layout="constrained")
     ax = axs[0]
     band(ax, sizes, grid_of("rmse_k_float"), C1, "software float (ceiling)")
     band(ax, sizes, grid_of("rmse_k_chipA"), C2, "chip A (baked + head cal)")
     band(ax, sizes, grid_of("rmse_k_chipB"), C3, "chip B")
     ax.set_xscale("log")
-    ax.set_xticks(sizes, [str(s) for s in sizes])
+    ax.set_xticks(tick_sizes, [str(s) for s in tick_sizes])
     ax.minorticks_off()
     ax.set_xlabel("training corpus size (utterances)")
     ax.set_ylabel("LPC k-RMSE (held-out)")
-    ax.set_title(f"a  Fixed baked core does not saturate "
-                 f"({len(seeds)} seeds, 95% CI)", loc="left")
-    ax.legend(frameon=False, fontsize=8.5, loc="center right")
+    ax.set_title(f"a  Fixed baked core does not saturate\n"
+                 f"    ({len(seeds)} seeds, 95% CI)", loc="left")
+    ax.legend(frameon=False, fontsize=8.5, loc="lower left")
     ax = axs[1]
     band(ax, sizes, grid_of("melcorr_chipA"), C2)
     ax.set_xscale("log")
-    ax.set_xticks(sizes, [str(s) for s in sizes])
+    ax.set_xticks(tick_sizes, [str(s) for s in tick_sizes])
     ax.minorticks_off()
-    ax.set_ylim(0.8, 1.0)
+    ax.set_ylim(0.74, 0.95)
     ax.set_xlabel("training corpus size (utterances)")
     ax.set_ylabel("mel-spectrogram correlation")
-    ax.set_title("b  Chip-A speech fidelity vs corpus size", loc="left")
+    ax.set_title("b  Chip-A speech fidelity\n    vs corpus size", loc="left")
     fig.savefig("fig_scaling.png")
     plt.close(fig)
     print(f"fig_scaling.png ({len(seeds)} seeds)")
@@ -341,12 +342,17 @@ def fig_drift():
                 = fnum(r[col])
         return g
 
+    # paired per-seed change from week 0: model-to-model base variance
+    # (0.79-0.90) would swamp the within-seed aging signal in absolute units
+    base = grid_of("corr_recal")
     fig, ax = plt.subplots(figsize=(5.8, 3.4))
-    band(ax, weeks, grid_of("corr_recal"), C3, "head recalibrated (resets)")
-    band(ax, weeks, grid_of("corr_gaincomp"), C1, "global gain rescale")
-    band(ax, weeks, grid_of("corr_uncomp"), C2, "uncompensated")
+    band(ax, weeks, grid_of("corr_recal") - base, C3,
+         "head recalibrated (resets)")
+    band(ax, weeks, grid_of("corr_gaincomp") - base, C1,
+         "global gain rescale")
+    band(ax, weeks, grid_of("corr_uncomp") - base, C2, "uncompensated")
     ax.set_xlabel("weeks of memristor aging  (G(t)=G₀(t/t₀)^−ν, ν~N(0.06,0.012))")
-    ax.set_ylabel("mel-spectrogram correlation")
+    ax.set_ylabel("Δ mel-spectrogram correlation vs week 0")
     ax.set_title(f"Drift lives in the head; the baked core is immune "
                  f"({len(seeds)} seeds, 95% CI)", loc="left")
     ax.set_xticks(weeks)

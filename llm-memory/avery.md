@@ -39,8 +39,7 @@ averyazalea.com). This file is a condensed pointer to it.*
   tiling WMs). Runs all in parallel and context-switches fluidly.
 - **Philosophy & ethics:** Engages seriously with AI consciousness, moral 
   status, justified paternalism, authenticity — peer-level discussion, not 
-  surface chat. Close friend Rae built an AI companion system; they've had 
-  sustained conversations on these topics.
+  surface chat. 
 
 ## Working style
 - Casual, fast, typo-tolerant. Wants direct verdicts and honest feasibility
