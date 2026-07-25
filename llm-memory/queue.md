@@ -8,19 +8,26 @@ sweep (baked core doesn't saturate); interactive clock viewer with
 current-heatmap die + 4 voices + memristor-aging week slider (published as
 an Artifact); physical t^-nu drift experiment; `70_literature_validation.md`.
 
+DONE (session 2, 2026-07-25): **paper draft v1 = `80_paper_draft.md`**;
+**topology_v14/** (grid vs perm vs clustered tiles, IR-aware baking — see
+TOPOLOGY_V14.md); viewer input-channel phone labels + Artifact republish.
+
 **NEXT, in order:**
 1. **Error bars over multiple seeds** for the drift + scaling curves (both are
    single-seed right now; the drift table's gain-comp wiggle is from
    per-week independent draws — see RESULTS_v13 caveats). This is the main
    thing standing between the current results and paper-grade figures.
-2. **Paper draft** — methods + results are largely in place across the
-   numbered docs + RESULTS_v13; assemble per the skeleton in
-   `50_investigation_queue.md`.
-3. Verify the citations in `70_literature_validation.md` (subagent-gathered;
-   need a human/careful pass before publishing).
-4. RC-causal streaming front end (speced in 60_, NOT built yet) on the large
+2. Verify the citations in `70_literature_validation.md` / the paper's
+   reference list (subagent-gathered; need a human/careful pass before
+   publishing).
+3. Iterate `80_paper_draft.md` with Avery (structure is in place; drop in
+   multi-seed figures when #1 lands).
+4. Group-sparsity / clusterable training follow-up from topology_v14 (make
+   tiles own disjoint row subsets → real area shrink; then layout-in-the-
+   loss training). New, from Avery's topology question.
+5. RC-causal streaming front end (speced in 60_, NOT built yet) on the large
    corpus — parity-at-fewer-lines streaming variant for the demo.
-5. Optional demo polish: widen the showcase-time set; matched-capacity
+6. Optional demo polish: widen the showcase-time set; matched-capacity
    control for the scaling claim (F9 caveat).
 
 The v4-v12 investigation queue below is still valid but secondary to the

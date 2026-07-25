@@ -19,6 +19,18 @@ import os
 
 data = json.load(open("demo_v13_data.json"))
 
+# phone-symbol order (row labels for the L1 one-hot input blocks); the JSON
+# predates this field, so pull it from the corpus cache when absent.
+if "phone_syms" not in data:
+    try:
+        import numpy as np
+        data["phone_syms"] = [
+            str(s) for s in np.load("corpus_v13.npz", allow_pickle=True)["inv_phones"]
+        ]
+    except Exception as e:
+        print(f"warning: no phone_syms ({e}) — input rows will be unlabeled")
+        data["phone_syms"] = []
+
 # inline every showcase utterance's three voices as base64 wavs
 wavs = {}
 voices = ["chipA", "float", "ceiling", "original"]
@@ -200,6 +212,26 @@ function heat(base,cu){if(cu<0.02)return hexA(base,0.05);
  const t=Math.min(1,cu);return mixA(base,C.pulse,Math.pow(t,0.55),0.16+0.84*Math.pow(t,0.7));}
 
 let U=null, N=0, dash=0, cur=-1;
+// L1 input rows are one-hot phone letters: [0,n) prev phone, [n,2n) current,
+// [2n,3n) next, [3n,3n+5) position-in-phone lines.
+function rowLab(r){const S=D.phone_syms,n=S.length;
+ return r<3*n?S[r%n]:('p'+(r-3*n+1));}
+function drawInputLabels(t,inMap){const S=D.phone_syms;if(!S||!S.length)return;
+ const n=S.length;
+ cx.textAlign='right';
+ for(let r=0;r<t.rows;r++){const yy=t.y+r*t.ch+t.ch*0.85;
+  if(inMap[r]){cx.fillStyle=C.pulse;cx.font='bold 8px ui-monospace,monospace';}
+  else{cx.fillStyle=hexA(C.dim,0.55);cx.font='4.5px ui-monospace,monospace';}
+  cx.fillText(rowLab(r),t.x-5,yy);}
+ cx.textAlign='left';
+ const blocks=[[0,n,'prev'],[n,2*n,'now'],[2*n,3*n,'next'],[3*n,t.rows,'pos']];
+ blocks.forEach(([r0,r1,name])=>{
+  if(r0>0){const y=t.y+r0*t.ch;
+   cx.strokeStyle=hexA(C.dim,0.6);cx.beginPath();cx.moveTo(t.x-54,y);cx.lineTo(t.x-2,y);cx.stroke();
+   cx.strokeStyle=hexA(C.dim,0.15);cx.beginPath();cx.moveTo(t.x,y);cx.lineTo(t.x+t.w,y);cx.stroke();}
+  cx.save();cx.translate(t.x-46,t.y+(r0+r1)/2*t.ch);cx.rotate(-Math.PI/2);
+  cx.textAlign='center';cx.fillStyle=C.dim;cx.font='9px ui-monospace,monospace';
+  cx.fillText(name,0,0);cx.restore();});}
 function draw(f){
  cx.fillStyle=C.panel;cx.fillRect(0,0,cv.width,cv.height);
  if(!U)return;
@@ -218,6 +250,7 @@ function draw(f){
    for(let c=0;c<t.cols;c++){
     cx.fillStyle=heat(base,dr*Math.abs(t.W[r][c])/t.max);
     cx.fillRect(t.x+c*t.cw,y,t.cw-0.7,t.ch-0.7);}}
+  if(k===0)drawInputLabels(t,inMap);
   // bitline capacitors filling with integrated charge (= the neuron value)
   const oc=D.ceilings[k],bh=42;
   for(let c=0;c<t.cols;c++){

@@ -23,10 +23,30 @@ Shipped:
 - `70_literature_validation.md` (project root): sim assumptions vs published
   data, honest verdicts. Citations still need a human check before publishing.
 
+**Session 2 (2026-07-25, later):**
+- **Paper draft v1 assembled: `80_paper_draft.md`** (project root) — all of it
+  in one place: power (§6), passives/RC (§7), converter-free encoding (§5),
+  topology (§8), multimodal + recommended architecture for Avery's trimodal
+  scene-describing chip (§9), methods, lit-validation refs, limitations,
+  pre-submission checklist.
+- **NEW investigation `topology_v14/`** (script + CSV + TOPOLOGY_V14.md):
+  grid vs permuted vs clustered-tiled baked arrays, exact nodal solve on the
+  real PB-2 weights. Findings: placement is free and always helps (halves
+  comp clipping); k=4 tiling is a ~2× electrical win at r=1e-3 under
+  IR-aware baking; **area does NOT shrink** — trained W is dense, row
+  compaction never triggers → grid is area-optimal unless the model is
+  trained clusterable (group sparsity queued); comp backfires past the
+  clipping wall (r=3e-3); printed op point immune regardless.
+- Clock viewer: input channels now labeled with phone letters (L1 gutter:
+  per-row letters, active ones light up; prev/now/next/pos block labels);
+  Artifact republished at same URL.
+
 **NOT yet done / next:** error bars over multiple seeds for the drift +
-scaling curves; then the paper draft. RC-causal streaming front end was
-speced (`60_demo_and_paper_goals.md`) but not built. Full ordered list in
-`queue.md`. The v4-v12 investigation queue is secondary unless Avery redirects.
+scaling curves (still the top paper blocker); citation hand-check;
+group-sparsity clusterable-training follow-up (topology_v14). RC-causal
+streaming front end speced (`60_demo_and_paper_goals.md`) but not built.
+Full ordered list in `queue.md`. The v4-v12 investigation queue is secondary
+unless Avery redirects.
 
 **Git note:** Avery is archiving the v2 numbered docs into `oldmdfiles/` and
 an `old claude chats/` folder — intentional but left uncommitted. The v2 docs
