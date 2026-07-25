@@ -71,6 +71,16 @@ def drift_eval(m, Wn12, W3, b3, ceil, test_utts):
     return float(np.nanmean(corrs))
 
 
+def save(scal_rows, drift_rows):
+    """Flush after every point — the host has crashed mid-run before."""
+    for fn, rows in [("results_v13_scaling_seeds.csv", scal_rows),
+                     ("drift_v13_seeds.csv", drift_rows)]:
+        if rows:
+            with open(fn, "w", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+                w.writeheader(); w.writerows(rows)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=8)
@@ -98,9 +108,18 @@ def main():
             tr = train_pool[:sz]
             Xtr = np.vstack([u["X"] for u in tr])
             Ytr = np.vstack([u["Y"] for u in tr])
-            rng = np.random.default_rng(10_000 + seed)
-            m = v7.Reg([in_dim, 64, 32, P + 3], rng)
-            train_model(m, Xtr, Ytr, EPOCHS, LR, BATCH, rng)
+            # lr 0.06 diverges for the odd init draw (NaN weights); retry
+            # with a fresh stream and reduced lr rather than losing the seed
+            for attempt in range(4):
+                rng = np.random.default_rng(10_000 + 97 * seed + 31 * attempt)
+                m = v7.Reg([in_dim, 64, 32, P + 3], rng)
+                train_model(m, Xtr, Ytr, EPOCHS, LR * 0.6 ** attempt,
+                            BATCH, rng)
+                if all(np.isfinite(W).all() for W in m.W):
+                    break
+                print(f"seed {seed} size {sz}: diverged (attempt {attempt}),"
+                      f" retrying at lr {LR * 0.6 ** (attempt + 1):.4f}",
+                      flush=True)
             ceil = [np.percentile(h, 99.5) for h in m.forward(Xtr)[1:-1]]
             r = eval_point(m, ceil, test_utts, Xte, Yte, Xtr, Ytr, seed)
             r = {k: (round(v, 4) if isinstance(v, float) else v)
@@ -111,6 +130,7 @@ def main():
                   f"[{time.time()-ts:.0f}s]", flush=True)
             if sz == SIZES[-1]:
                 m_full, ceil_full, Xtr_f, Ytr_f = m, ceil, Xtr, Ytr
+            save(scal_rows, drift_rows)
 
         # drift series on the full-size model, one nu draw per seed
         Wn12, Gp, Gn, s, b3 = dr.bake_head_full(
@@ -131,13 +151,9 @@ def main():
                                    corr_recal=round(base, 4)))
             print(f"seed {seed} week {wk:2d}: uncomp {cu:.4f} "
                   f"gain {cc:.4f} recal {base:.4f}", flush=True)
+            save(scal_rows, drift_rows)
 
-        # write incrementally so partial results survive interruptions
-        for fn, rows in [("results_v13_scaling_seeds.csv", scal_rows),
-                         ("drift_v13_seeds.csv", drift_rows)]:
-            with open(fn, "w", newline="") as fh:
-                w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
-                w.writeheader(); w.writerows(rows)
+        save(scal_rows, drift_rows)
         print(f"== seed {seed} done [{time.time()-ts:.0f}s seed, "
               f"{time.time()-t0:.0f}s total]", flush=True)
 
