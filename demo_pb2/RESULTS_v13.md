@@ -52,6 +52,38 @@ Reading it:
   paper figure (fidelity vs. corpus size, flat chip line under an improving
   float line).
 
+## Drift over weeks — degradation lives in the head, not the core
+`drift_v13.py` applies the physical PCM/RRAM power law G(t)=G₀·(t/t₀)^−ν
+(ν~N(0.06,0.012) per device; Joshi et al. 2020, see
+`../70_literature_validation.md` §3) to the memristor head's two differential
+conductances separately. The baked L1/L2 do not drift. Spectrogram-corr on
+the held-out test set vs. weeks aged (`drift_series_v13.py`, 20-utt subsample):
+
+| weeks | uncompensated | gain-compensated | recalibrated |
+|--:|--:|--:|--:|
+| 0 | 0.903 | 0.903 | 0.903 |
+| 1 | 0.855 | 0.904 | 0.903 |
+| 2 | 0.842 | 0.901 | 0.903 |
+| 4 | 0.811 | 0.873 | 0.903 |
+| 8 | 0.813 | 0.911 | 0.903 |
+| 12 | 0.793 | 0.890 | 0.903 |
+
+- Uncompensated fidelity falls 0.90→0.79 over 12 weeks — audible.
+- A single global gain rescale (cheapest fix) recovers most of it → most of
+  the drift is common-mode; the per-device ν spread is the small irrecoverable
+  part.
+- Re-calibrating the head (write-verify reprogram) resets it to fresh.
+- The baked core is drift-free by construction — the whole point.
+
+This extends finding F4 (which used an ad-hoc relaxation) with the physical
+model the literature review asked for. Caveat: single seed; each week here
+uses an independent per-device draw (hence the gain-comp wiggle) — the viewer
+uses one fixed draw for smooth monotonic aging; average seeds before the paper.
+The demo exposes this as a **"memristor aging" week slider**: because a1/a2
+are baked (drift-independent), the browser recomputes only the head + outputs
+live, so you watch the memristor tile degrade while L1/L2 stay frozen, and
+hear the chip at 0/4/8/12 weeks.
+
 ## Honest caveats
 - **Single seed.** No error bars yet; the melspec-corr column is visibly
   noisy (0.877–0.919) because it's a 24-utterance subsample. Before the

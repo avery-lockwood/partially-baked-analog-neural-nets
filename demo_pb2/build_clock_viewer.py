@@ -21,8 +21,10 @@ data = json.load(open("demo_v13_data.json"))
 
 # inline every showcase utterance's three voices as base64 wavs
 wavs = {}
+voices = ["chipA", "float", "ceiling", "original"]
+voices += [f"drift{w}" for w in data.get("drift_weeks", [])]
 for u in data["utterances"]:
-    for voice in ("chipA", "float", "ceiling", "original"):
+    for voice in voices:
         p = f"demo_audio/{u['tag']}_{voice}.wav"
         if os.path.exists(p):
             wavs[f"{u['tag']}_{voice}"] = base64.b64encode(open(p, "rb").read()).decode()
@@ -61,6 +63,9 @@ section.left{display:flex;flex-direction:column;gap:14px}
 canvas{width:100%;height:auto;display:block;background:var(--panel);
  border:1px solid var(--line);border-radius:4px}
 #scrub{width:100%;accent-color:var(--copper);margin-top:10px}
+.drift #drift{width:100%;accent-color:var(--mem)}
+.drift .driftlab{font-size:10.5px;color:var(--dim);line-height:1.5;margin-top:5px}
+.drift .driftlab b{color:var(--mem);font-weight:600}
 #phones{position:relative;height:20px;margin-top:2px;font-size:10px;color:var(--dim)}
 #phones span{position:absolute;top:0;border-left:1px solid var(--line);padding-left:3px}
 #phones span.on{color:var(--pulse);border-left-color:var(--pulse)}
@@ -104,6 +109,14 @@ in the signal path.</p>
   <div>
    <h2 style="font-size:10.5px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:7px">pick a time</h2>
    <div class="times" id="times"></div>
+  </div>
+  <div class="drift">
+   <h2 style="font-size:10.5px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:7px">memristor aging</h2>
+   <input id="drift" type="range" min="0" max="12" step="1" value="0"
+    aria-label="weeks of memristor drift">
+   <div class="driftlab"><b id="driftLab">fresh</b> — drift hits the
+    <span style="color:var(--mem)">memristor head</span> only; the baked core
+    is immune. Re-calibrating the head resets it.</div>
   </div>
  </section>
  <div>
@@ -158,6 +171,23 @@ const tiles=[];{let x=58;
    name:L.name.toUpperCase().replace(/X/g,'×')};
   t.h=L.rows*ch; t.w=L.cols*cw; t.max=Math.max(...L.W.flat().map(Math.abs));
   tiles.push(t); x+=t.w+78;});}
+
+// live memristor head: drifts with the week slider (baked tiles never change).
+// physical power law G(t)=G0*(t/t0)^-nu applied to each differential cell.
+const H=D.head; let driftWeeks=0, curOut=null;
+function driftedHeadW(w){const Gp=H.Gp,Gn=H.Gn,s=H.scale;
+ if(w<=0) return Gp.map((row,r)=>row.map((g,c)=>(g-Gn[r][c])*s));
+ const ratio=Math.max(w,H.t0_weeks)/H.t0_weeks;
+ return Gp.map((row,r)=>row.map((g,c)=>
+   (g*Math.pow(ratio,-H.nup[r][c])-Gn[r][c]*Math.pow(ratio,-H.nun[r][c]))*s));}
+function setHead(w){driftWeeks=w;const W3=driftedHeadW(w);
+ tiles[2].W=W3;tiles[2].max=Math.max(1e-9,...W3.flat().map(Math.abs));}
+setHead(0);
+// head output for a frame = clip(relu(a2·W3 + b3)); baked a2 is drift-independent
+function computeOut(a2f){const W3=tiles[2].W,b=H.b3,nc=W3[0].length,o=new Array(nc).fill(0);
+ for(let r=0;r<a2f.length;r++){const a=a2f[r];if(a<=0)continue;const row=W3[r];
+  for(let c=0;c<nc;c++)o[c]+=a*row[c];}
+ for(let c=0;c<nc;c++)o[c]=Math.min(H.out_clip,Math.max(0,o[c]+b[c]));return o;}
 function hexA(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),
  b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
@@ -176,7 +206,7 @@ function draw(f){
  const fr=U.frames, inMap={};fr.input[f].forEach(i=>inMap[i]=1);
  const drive=[inMap,fr.a1[f],fr.a2[f]];          // what drives each tile's rows
  const dCeil=[1,D.ceilings[0],D.ceilings[1]];
- const col=[fr.a1[f],fr.a2[f],fr.out[f]];         // charge collected on each bitline
+ const col=[fr.a1[f],fr.a2[f],curOut];            // charge collected on each bitline (head = live/aged)
  tiles.forEach((t,k)=>{
   cx.strokeStyle=C.line;cx.strokeRect(t.x-1,t.y-1,t.w+2,t.h+2);
   cx.fillStyle=C.dim;cx.font='10px ui-monospace,monospace';cx.fillText(t.name,t.x,t.y-8);
@@ -214,7 +244,7 @@ const mDiv=document.getElementById('meters');
 D.param_names.forEach((n,i)=>mDiv.insertAdjacentHTML('beforeend',
  `<div class="meter m${n}"><div class="lab"><span>${n}</span><b id="mv${i}">–</b></div>
   <div class="tr"><div class="fl" id="mf${i}"></div></div></div>`));
-function meters(f){const o=U.frames.out[f];o.forEach((v,i)=>{
+function meters(f){const o=curOut;o.forEach((v,i)=>{
  document.getElementById('mf'+i).style.width=Math.min(100,100*v/1.05)+'%';
  const phys=v*D.scale[i];
  document.getElementById('mv'+i).textContent=D.param_names[i]==='F0'?phys.toFixed(0)+' Hz':phys.toFixed(2);});}
@@ -233,7 +263,11 @@ function setHands(h,m){const ha=((h%12)+m/60)*30,ma=m*6;
 // ---- audio ----
 let key='chipA', selTag=null;
 const audio=new Audio();
-function audioName(){return WAV[selTag+'_'+key]?('data:audio/wav;base64,'+WAV[selTag+'_'+key]):'';}
+function nearestDrift(w){const pts=D.drift_weeks||[];if(w<2||!pts.length)return 0;
+ let b=pts[0];pts.forEach(p=>{if(Math.abs(p-w)<Math.abs(b-w))b=p;});return b;}
+function audioName(){let vk=key;                 // baked-chip voice ages with the slider
+ if(key==='chipA'){const w=nearestDrift(driftWeeks);if(w>0)vk='drift'+w;}
+ const k=selTag+'_'+vk;return WAV[k]?('data:audio/wav;base64,'+WAV[k]):'';}
 function setSrc(){const t=audio.currentTime,was=!audio.paused;audio.src=audioName();
  if(was){audio.currentTime=t;audio.play();}}
 document.querySelectorAll('.src').forEach(b=>b.onclick=()=>{key=b.dataset.k;
@@ -263,7 +297,13 @@ audio.onplay=()=>playBtn.textContent='❚❚ pause';
 audio.onpause=()=>playBtn.textContent='▶ speak';
 audio.onended=()=>playBtn.textContent='▶ speak';
 scrub.oninput=()=>{audio.currentTime=scrub.value*D.frame_ms/1000;render(+scrub.value);};
+const driftEl=document.getElementById('drift'),driftLab=document.getElementById('driftLab');
+driftEl.oninput=()=>{setHead(+driftEl.value);
+ driftLab.textContent=driftWeeks===0?'fresh':('aged '+driftWeeks+' week'+(driftWeeks>1?'s':''));
+ if(key==='chipA')setSrc();          // hear the aged chip
+ const f=Math.max(0,cur);cur=-1;render(f);};   // force redraw of current frame
 function render(f){f=Math.max(0,Math.min(N-1,f));if(f===cur&&!motion)return;cur=f;
+ curOut=computeOut(U.frames.a2[f]);
  draw(f);meters(f);document.getElementById('curph').textContent=U.phones[f]||'';
  [...phDiv.children].forEach(s=>s.classList.toggle('on',U.phones[+s.dataset.f]===U.phones[f]&&+s.dataset.f<=f));
  scrub.value=f;}

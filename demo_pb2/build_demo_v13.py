@@ -25,7 +25,10 @@ import time
 import numpy as np
 
 import tts_chip_sim_v7 as v7
+import drift_v13 as dr
 from train_scale_v13 import load_corpus, train_model, P
+
+DRIFT_WEEKS = [4, 8, 12]   # pre-rendered aged-audio points for the week slider
 
 # showcase times: one per phrasing type, spread around the clock face
 SHOWCASE = [
@@ -80,7 +83,14 @@ def main():
     m = v7.Reg([in_dim, 64, 32, P + 3], rng)
     train_model(m, Xtr, Ytr, args.epochs, args.lr, args.batch, rng)
     ceil = [np.percentile(h, 99.5) for h in m.forward(Xtr)[1:-1]]
-    Wn, b3 = v7.bake_chip(m, np.random.default_rng(100), Xtr, Ytr, ceil)
+    # expose the head's differential conductances so it can be drifted (the
+    # week-0 net head is identical to v7.bake_chip's)
+    Wn12, Gp, Gn, s, b3 = dr.bake_head_full(m, np.random.default_rng(100),
+                                            Xtr, Ytr, ceil)
+    Wn = Wn12 + [(Gp - Gn) * s]
+    nrng = np.random.default_rng(77)   # ONE fixed per-device drift draw; JS reuses it
+    nup = np.clip(0.06 + 0.012 * nrng.standard_normal(Gp.shape), 0, None)
+    nun = np.clip(0.06 + 0.012 * nrng.standard_normal(Gn.shape), 0, None)
     print(f"trained + baked chip A  {time.time()-t0:.0f}s")
 
     os.makedirs("demo_audio", exist_ok=True)
@@ -97,6 +107,13 @@ def main():
         ceilings=[float(c) for c in ceil] + [1.05],
         scale=[1.0] * P + [300.0, 1.0, 1.0],
         param_names=param_names, frame_ms=10, in_dim=in_dim,
+        # everything the browser needs to age the memristor head live (baked
+        # core L1/L2 is immune, so a1/a2 never change — only the head drifts)
+        head=dict(Gp=np.round(Gp, 4).tolist(), Gn=np.round(Gn, 4).tolist(),
+                  nup=np.round(nup, 4).tolist(), nun=np.round(nun, 4).tolist(),
+                  scale=float(s), b3=np.round(b3, 4).tolist(),
+                  t0_weeks=dr.T0_WEEKS, out_clip=1.05),
+        drift_weeks=DRIFT_WEEKS, drift_max=12,
         utterances=[],
     )
 
@@ -121,6 +138,13 @@ def main():
         Of = m.forward(X)[-1]
         v7.write_wav(f"demo_audio/{tag}_float.wav", v7.synth_lpc(v7.from_outputs(Of)))
         v7.write_wav(f"demo_audio/{tag}_ceiling.wav", v7.synth_lpc(F))
+        # aged-head audio for the week slider (uncompensated drift)
+        for wk in DRIFT_WEEKS:
+            W3w = dr.drift_head_nu(Gp, Gn, s, wk, nup, nun)
+            Ow = v7.td_forward(m, Wn12 + [W3w], X, v7.R_LEVELS,
+                               np.random.default_rng(7), ceil, b3)
+            v7.write_wav(f"demo_audio/{tag}_drift{wk}.wav",
+                         v7.synth_lpc(v7.from_outputs(Ow)))
         if u["audio"] is not None:
             y = u["audio"]
             v7.write_wav(f"demo_audio/{tag}_original.wav",
