@@ -1,28 +1,48 @@
 # Avery Lockwood
 
-- Pronouns: she/her.
-- Industrial arts instructor, fabricator, and engineering student (mechanical
-  E + computer E).
-- Builds her own lab equipment, including a sputter/PVD deposition rig
-  ("Simple-Sputter-Coater" — used for the PB-1 memristor head daughterboard
-  process, see 30_design_rules_hardware.md).
-- Hardware control plane of choice: ESP32.
+*Full detail: `40_collaborator_avery.md` in the project root (sources:
+in-conversation + her GitHub avery-lockwood + portfolio site
+averyazalea.com). This file is a condensed pointer to it.*
+
+- Pronouns: she/her. Transgender tradeswoman, industrial arts instructor,
+  designer, fabricator, programmer, engineering student (mech E + comp E).
+  Worked in the trades and studied engineering her whole adult life.
+  Blacksmith (mentored by Cleste Flores); connected to Sudo Room and
+  Noisebridge hackerspaces. Writes about maintaining safe, inclusive
+  learning spaces in STEM/trades.
+- Deep fabrication/equipment-building background: portable field-repairable
+  forge, OpenInduction forge, DVD-drive laser cutter from parts, upcycled
+  robot arm, lifelong home shop (jewelry, chemistry, machining, electronics).
+- **Thin-film/deposition (project-critical):** building lab-scale
+  sputter/PVD capability (Simple-Sputter-Coater, Soft-Vacuum-PVD in
+  progress) — this is exactly how lab memristors (TiO2/HfOx) are made, so
+  DIY memristor fab is a plausible stretch goal for this project, not just
+  printed/discrete-resistor baked cores. See PROJECT IMPLICATIONS #1 in
+  40_collaborator_avery.md.
+- Also into advanced-manufacturing R&D (friction-surfacing 3D printing with
+  Sindry Manufacturing, orbital friction welding, detonation spray welding).
+- Embedded/software: ESP32 (C++, her control-plane default), Rust serial
+  plotter, C++, Python/Selenium, some ML coursework (NLP medical-QA bot,
+  Jupyter). Ethos: open hardware, budget/upcycled builds, teaching,
+  documenting the process.
 - Works solo on this project; sessions are long single-day pushes (v4→v12
   happened in one day, 2026-07-25).
 
-## Note on a missing file
-00_CRITICAL_v2.md (line 4) references `40_collaborator_avery.md` as an
-existing, unchanged file with more detail on Avery — but that file is not
-present in the project directory as of 2026-07-25. Either it exists
-elsewhere (a different session/machine) or it was lost. Worth asking Avery
-directly rather than assuming; don't fabricate its contents. If she provides
-it, add it here or restore it as its own numbered file and update this note.
-
-## Working style (inferred from the docs, confirm with her over time)
+## Working style
+- Casual, fast, typo-tolerant. Wants direct verdicts and honest feasibility
+  assessments over hedging.
+- Extends ideas independently (partial baking → fine-tuning → TTS chip were
+  all her own follow-through) — systems thinker, delegates execution but
+  steers direction herself.
+- Demo framing that fits her: cheap, open-hardware, buildable, teachable —
+  e.g. the talking-clock TTS chip as an open educational kit is very
+  on-brand given her instructor/outreach background.
+- Code handoffs: Python/Jupyter fine for sim work; embedded/hardware she
+  can own directly in C++/Rust.
 - Runs long simulation sessions and packages results into a numbered-doc
   bundle (00_CRITICAL, 10_findings, 20_methods, 30_design_rules,
-  50_queue) plus notebooks — treat that structure as the project's own
-  convention, keep using it rather than inventing a new one.
+  50_queue) plus notebooks — keep using that convention rather than
+  inventing a new one.
 - Cares a lot about statistical rigor (CRN, paired tests, retracting
   findings that don't survive scrutiny — see F2 in 10_findings_v2.md).
   Don't round off "retracted" or "thinned" findings back up to confident
@@ -30,3 +50,8 @@ it, add it here or restore it as its own numbered file and update this note.
 - Has a queued item explicitly marked "do not start" (P3, memristor
   transformer) — respect priority ordering in 50_investigation_queue.md,
   don't jump ahead to P3 work unassigned.
+
+## Open gaps (ask when relevant)
+- Goal weighting: publication vs. demo vs. portfolio piece — affects
+  whether to prioritize IR-rigor-first or TTS-demo-first work.
+- Time budget/cadence; where she is in her engineering program.
