@@ -218,6 +218,11 @@ interfaces can be restructured so no conversion ever happens:
   split, where eliminating the converter also eliminates the *control plane*
   (§6).
 
+![Latency ledger: 768 slots serialized vs 103 pipeline vs 43 one-hot](paper_figures/fig_latency.png)
+*Fig. L — Converter-free encoding removes the 2^N serialization latency
+(F10): 43 µs/inference at a 1 µs printed slot, 18× vs 8-bit interlayer
+serialization, against a 5 ms speech frame.*
+
 ## 6. Power draw (F13) — measured from real charge flow
 
 All numbers from chip-A conductances and real utterance charge flow at
@@ -236,6 +241,12 @@ All numbers from chip-A conductances and real utterance charge flow at
 Baselines, same 7,584-MAC network: ESP32 software 6,250 µW; M4-class MCU
 38 µW; 28 nm digital ASIC 2.5 µW (not printable); all-programmable analog in
 same-µpower parts 16.2 µW.
+
+![Power: core breakdown, substrate baselines, control-plane ladder](paper_figures/fig_power.png)
+*Fig. P — (a) The 13 µW core is periphery-bound: both baked arrays together
+draw 0.21 µW. (b) Same network on other substrates (log scale). (c) The
+control-plane ladder: baking enables the 10 µW ring sequencer, deleting the
+225 mW always-on controller — 23 µW total system.*
 
 **Control plane is the real fight.** ESP32 always-on: 225,000 µW. ULP
 coprocessor: 300 µW. **Autonomous ring sequencer: ~10 µW → 23 µW total
@@ -310,6 +321,13 @@ because the baked core is ohmic, its IR distortion is *exactly predictable*
 time) — so any layout can be pre-compensated at bake time: predict the IR,
 then build the model with it.
 
+![IR distortion vs array size; baked vs quantized compensation](paper_figures/fig_ir.png)
+*Fig. IR — v12 exact-nodal study. (a) Raw W_eff distortion grows with array
+size and r_seg; the printed PB-1 operating point (r_seg≈2.4e-9) is off-scale
+immune. (b) Design-time pre-compensation with continuous baked conductances
+beats 16-level write-quantized compensation ~10× in the feasible regime —
+IR correction is itself an argument for baking.*
+
 Setup: real trained PB-2 baked weights (L1 92×64, L2 64×32), driven by the
 real utterance frames; exact nodal solver throughout; r_seg swept 1e-4–3e-3
 to expose differences (the printed PB-1 operating point, r_seg≈2.4e-9, is
@@ -346,6 +364,12 @@ activation-current error on 2,628 real frames):
 | tiled k4 θ0.05  | 1e-3 | 0.428 | 0.373 | **0.270** | 11.4% | 1.43 |
 | grid            | 3e-3 | 0.751 | 0.822 | 0.919 (!) | 22.2% | 1.00 |
 | tiled k4 θ0.05  | 3e-3 | 0.674 | 0.597 | 0.588 | 30.6% | 1.40 |
+
+![Topology study: grid vs placement vs clustered tiles](paper_figures/fig_topology.png)
+*Fig. T — L1 activation-current error on 2,628 real frames vs r_seg. Solid:
+as-designed; dashed: IR-aware baked. Placement (orange) is free and always
+helps; 4-tile clustering (aqua) halves compensated error at r=1e-3; inside
+the shaded clipping wall compensation backfires (rule 12).*
 
 Four findings:
 1. **Placement is free and always helps**: pure permutation buys ~5–10%
@@ -390,6 +414,11 @@ deterministic part of IR into a solved problem up to conductance clipping.
 - **Power is flat in modality count:** one shared baked-core chip runs
   24.0 µW at M=1 and 24.1 µW at M=8 (quiescent encoders see no voltage,
   hence no dynamic power *and no leak*), versus 192 µW for M separate chips.
+
+![Multimodal power: shared baked core is flat in M](paper_figures/fig_multimodal.png)
+*Fig. M — System power vs modality count (F14, v10 measured endpoints).
+Adding a modality to the shared baked core costs +0.1 µW; separate chips
+scale as M × 24 µW.*
 - Trimodal fusion (image+text+audio on an analog sum bus, dual heads):
   baking the core costs ≈nothing on the fused head (0.995 vs 0.994) and is
   *better* on the delicate comparison head (0.810 vs 0.743 — the F5

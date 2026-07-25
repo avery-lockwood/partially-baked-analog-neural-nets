@@ -4,6 +4,10 @@ __pycache__/
 .DS_Store
 *.deb
 
+# local archives, not part of the repo
+old claude chats/
+oldmdfiles/
+
 # regenerable heavy caches / logs (rebuild via demo_pb2 scripts in-container)
 demo_pb2/corpus_v13.npz
 demo_pb2/corpus_v13_first*.npz
