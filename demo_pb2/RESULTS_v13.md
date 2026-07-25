@@ -76,3 +76,13 @@ Reading it:
 - `demo_audio/` — chip-A / ceiling / original wavs for showcase times.
 - `demo_v13_data.json` + `clock_viewer.html` — the interactive clock demo
   (one shared baked chip, selectable times, charge-flow die + audio).
+  `clock_viewer.html` is a standalone self-contained page (drop on a website).
+  `build_clock_viewer.py` also emits `clock_viewer_fragment.html` (gitignored)
+  for publishing as a claude.ai Artifact.
+
+## Live preview
+Published as an Artifact 2026-07-25:
+https://claude.ai/code/artifact/e13b21c9-70ce-4540-9716-36b49038da18
+To update it in place after regenerating: rebuild the fragment and republish
+that same file path (or pass the URL as `url` from another session).
+

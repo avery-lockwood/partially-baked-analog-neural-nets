@@ -9,3 +9,4 @@ demo_pb2/corpus_v13.npz
 demo_pb2/corpus_v13_first*.npz
 demo_pb2/*.log
 demo_pb2/_tmp.wav
+demo_pb2/clock_viewer_fragment.html

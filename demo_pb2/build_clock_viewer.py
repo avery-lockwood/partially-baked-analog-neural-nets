@@ -257,3 +257,10 @@ buildClock();select(D.utterances[0]);requestAnimationFrame(loop);
 out = HTML.replace("__DATA__", json.dumps(data)).replace("__WAV__", json.dumps(wavs))
 open("clock_viewer.html", "w").write(out)
 print(f"clock_viewer.html  {len(out)//1024} kB  ({len(wavs)} audio clips)")
+
+# also emit a fragment (no <!doctype>/<html>/<head>/<body>) for publishing as
+# a claude.ai Artifact, which supplies its own document skeleton.
+i, j = out.index("<style>"), out.index("</body></html>")
+frag = out[i:j].replace("</head><body>", "\n")
+open("clock_viewer_fragment.html", "w").write(frag)
+print(f"clock_viewer_fragment.html  {len(frag)//1024} kB  (Artifact-ready)")
