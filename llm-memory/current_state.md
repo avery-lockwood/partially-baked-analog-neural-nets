@@ -4,14 +4,34 @@ Full numbers live in `10_findings_v2.md`; this is the fast-scan status
 table. When a new session lands (v13+), update this file — don't let it
 drift from 00_CRITICAL.
 
-## ACTIVE WORKSTREAM (started 2026-07-25 evening): scaled demo + paper
-Avery redirected to building a bigger, more complex TTS-chip demo for her
-website, feeding a paper (sim methods + literature-cited validation + live
-demo). Target: "PB-2 / demo v13" — full natural-time talking clock (~720
-utterances vs v7's 36). Spec + task list: `60_demo_and_paper_goals.md`
-(project root) and `queue.md` (this folder). Runs go through the Docker
-container `analog-nn-dev`. This is now the top priority; the v4-v12
-investigation queue is secondary unless she redirects.
+## WORKSTREAM: PB-2 / demo v13 — largely DONE (2026-07-25)
+Built a bigger TTS-chip demo (feeding the paper) — all in `demo_pb2/`,
+committed. Numbers + honest caveats: `demo_pb2/RESULTS_v13.md`. Pipeline
+runs in the Docker container `analog-nn-dev`.
+Shipped:
+- 720-utterance natural-time corpus (36→720). **Scaling result: the fixed
+  baked core does NOT saturate** — chip k-RMSE flat ~0.084 while the float
+  ceiling improves 23% across a 17× vocabulary jump (the headline figure).
+- Interactive clock-face web viewer (`demo_pb2/clock_viewer.html`), published
+  live as an Artifact: current-heatmap die (charge where it physically flows)
+  + filling bitline caps, 4 voices, and a **memristor-aging week slider**
+  (physical t^-nu drift, head-only; browser recomputes only the head live so
+  the baked core visibly stays frozen).
+- Drift result: uncompensated fidelity 0.90→0.79 over 12 weeks; a global
+  gain-rescale recovers most; head recalibration resets it (extends F4 with
+  the physical model).
+- `70_literature_validation.md` (project root): sim assumptions vs published
+  data, honest verdicts. Citations still need a human check before publishing.
+
+**NOT yet done / next:** error bars over multiple seeds for the drift +
+scaling curves; then the paper draft. RC-causal streaming front end was
+speced (`60_demo_and_paper_goals.md`) but not built. Full ordered list in
+`queue.md`. The v4-v12 investigation queue is secondary unless Avery redirects.
+
+**Git note:** Avery is archiving the v2 numbered docs into `oldmdfiles/` and
+an `old claude chats/` folder — intentional but left uncommitted. The v2 docs
+(00–50 + 40) now live in `oldmdfiles/`, not root; don't "restore" them. Avoid
+`git add -A` (would sweep in `old claude chats/`).
 
 ## Finding status
 | # | one-line | status |

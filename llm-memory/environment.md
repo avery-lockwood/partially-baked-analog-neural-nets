@@ -35,17 +35,27 @@ were appended to `~/.bashrc`. If another tool is needed and normal
 should work as long as the package doesn't need a postinst script or
 setuid bits.
 
-## Docker dev container (2026-07-25) — the real fix for the no-root problem
-Set up a persistent CPU-only Docker container (`analog-nn-dev`) for running
-notebooks/scripts in this project, specifically to route around the no-sudo
-problem above. See `.docker/README.md` in the project root for day-to-day
-usage. Host specs: AMD Ryzen 3 2200G (4 cores, weak), 32GB RAM, GTX 1070
-GPU (currently on the `nouveau` driver — no CUDA yet; switching to the
-proprietary driver + wiring `--gpus all` into the container is a deferred,
-separate step since it needs a reboot). Once the container is running,
-Claude should do `docker exec analog-nn-dev ...` for python/jupyter work in
-this project rather than running things directly on the host — no root
-workarounds needed inside the container. `.docker/setup_docker.sh` has to
-be run by Avery herself (needs an interactive sudo password); after it
-runs she needs to log out/in (or `newgrp docker`) for her (and Claude's)
-shell to pick up passwordless docker access.
+## Docker dev container (2026-07-25) — UP and working
+Persistent CPU-only container `analog-nn-dev`, project bind-mounted at
+`/workspace` (host `.../analog neural net project` == container
+`/workspace`). Has python3.12 + numpy/scipy/sklearn/matplotlib/jupyter +
+espeak-ng + mbrola + mbrola-us1. Do project python/jupyter work here, not on
+the host. See `.docker/README.md`.
+
+**Invoking it (fresh session):** try
+`docker exec -w /workspace/demo_pb2 analog-nn-dev python3 <script>` directly;
+if it says "permission denied ... docker.sock", wrap with `sg docker`:
+`sg docker -c "docker exec -w /workspace/demo_pb2 analog-nn-dev python3 <script>"`
+(this worked all session without a Claude Code restart). Gotchas:
+- The container runs as ROOT → files it writes into the bind mount are
+  root-owned (avery can read/commit them but can't delete/overwrite from the
+  host; regenerate via the container).
+- Long jobs take ~3-5 min (a ~156s corpus-load dominates); run them in the
+  background. Weak CPU (4 cores) — keep concurrency low. 24g memory cap.
+
+Host specs: AMD Ryzen 3 2200G (4 cores, weak), 32GB RAM, GTX 1070 GPU on the
+`nouveau` driver — no CUDA yet; switching to the proprietary driver + wiring
+`--gpus all` into the container is deferred (needs a reboot; Avery prefers
+the low-risk path). `.docker/setup_docker.sh` did the one-time host setup
+(run WITHOUT a sudo prefix, else it adds root not avery to the docker
+group — already fixed in the script).

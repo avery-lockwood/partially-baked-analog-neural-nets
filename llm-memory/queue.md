@@ -1,28 +1,29 @@
 # What's next
 
-## ACTIVE WORKSTREAM (set 2026-07-25): scaled demo + paper
-Avery's current priority — see `60_demo_and_paper_goals.md` in the project
-root for the full spec. Ordered:
-1. Get the Docker container (`analog-nn-dev`) reachable — blocked on
-   `sudo usermod -aG docker avery` + shell group refresh (see
-   environment.md). All heavy runs go through the container.
-2. Scale the talking-clock corpus 36 → full natural-time space (~720
-   utterances, natural phrasings). Cache analyzed LPC frames to .npz so
-   network iteration is cheap (corpus gen is the expensive part on the weak
-   Ryzen 3).
-3. Retrain the baked core on the large corpus; measure spectrogram fidelity
-   vs. corpus size — this scaling curve is the headline paper figure (does
-   the fixed baked core generalize or saturate?).
-4. RC-causal streaming front end (v10 path) on the large corpus.
-5. New interactive web viewer (clock face + charge flow + audio) for the
-   website, extending build_viewer.py / chip_viewer.html.
-6. `70_literature_validation.md`: map each sim assumption (5% fab noise, 16
-   write levels, drift, IR) and each headline result to a citable number
-   from published analog-IMC / memristor / printed-electronics / LPC
-   literature, stating honestly where our numbers are optimistic. This is
-   the paper's "validation citing other papers" requirement.
+## ACTIVE WORKSTREAM (2026-07-25): scaled demo + paper
+See `60_demo_and_paper_goals.md` (spec) and `current_state.md` (status).
+DONE this session (all in `demo_pb2/`, committed; numbers in
+`demo_pb2/RESULTS_v13.md`): Docker container up; 720-utt corpus; scaling
+sweep (baked core doesn't saturate); interactive clock viewer with
+current-heatmap die + 4 voices + memristor-aging week slider (published as
+an Artifact); physical t^-nu drift experiment; `70_literature_validation.md`.
 
-The v4-v12 investigation queue below is still valid but now secondary to the
+**NEXT, in order:**
+1. **Error bars over multiple seeds** for the drift + scaling curves (both are
+   single-seed right now; the drift table's gain-comp wiggle is from
+   per-week independent draws — see RESULTS_v13 caveats). This is the main
+   thing standing between the current results and paper-grade figures.
+2. **Paper draft** — methods + results are largely in place across the
+   numbered docs + RESULTS_v13; assemble per the skeleton in
+   `50_investigation_queue.md`.
+3. Verify the citations in `70_literature_validation.md` (subagent-gathered;
+   need a human/careful pass before publishing).
+4. RC-causal streaming front end (speced in 60_, NOT built yet) on the large
+   corpus — parity-at-fewer-lines streaming variant for the demo.
+5. Optional demo polish: widen the showcase-time set; matched-capacity
+   control for the scaling claim (F9 caveat).
+
+The v4-v12 investigation queue below is still valid but secondary to the
 demo/paper push unless Avery redirects.
 
 ---
