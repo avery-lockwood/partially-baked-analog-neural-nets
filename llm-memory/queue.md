@@ -12,16 +12,24 @@ DONE (session 2, 2026-07-25): **paper draft v1 = `80_paper_draft.md`**;
 **topology_v14/** (grid vs perm vs clustered tiles, IR-aware baking — see
 TOPOLOGY_V14.md); viewer input-channel phone labels + Artifact republish.
 
+DONE (session 3, 2026-07-25): **multi-seed error bars** (`demo_pb2/
+seeds_v13.py`: 8 seeds, per-seed splits [closes P0 #4 for v13], per-seed fab
+draws, 40-utt mel sample, fixed per-seed ν draws) + **paper figures
+pipeline** (`paper_figures/make_figures.py` → 7 figs, all wired into
+`80_paper_draft.md`). ⚠ Finding: the single-seed drift drop 0.90→0.79 was
+an artifact (per-week ν redraws + tail draw); honest 12-week uncompensated
+Δmelcorr is −0.021±0.015 (worst seed −0.048), monotone in all seeds — see
+RESULTS_v13.md "Multi-seed" section. Paper §11/abstract corrected. Host
+crashed twice mid-sweep; sweep now flushes CSVs per point and runs nice/
+2-thread (26 min total).
+
 **NEXT, in order:**
-1. **Error bars over multiple seeds** for the drift + scaling curves (both are
-   single-seed right now; the drift table's gain-comp wiggle is from
-   per-week independent draws — see RESULTS_v13 caveats). This is the main
-   thing standing between the current results and paper-grade figures.
-2. Verify the citations in `70_literature_validation.md` / the paper's
+1. Verify the citations in `70_literature_validation.md` / the paper's
    reference list (subagent-gathered; need a human/careful pass before
    publishing).
-3. Iterate `80_paper_draft.md` with Avery (structure is in place; drop in
-   multi-seed figures when #1 lands).
+2. Iterate `80_paper_draft.md` with Avery (structure + all 7 figures are in
+   place; drift-demo audio still renders the old dramatic single-draw aging
+   — consider regenerating worst-seed audio to match the corrected claim).
 4. Group-sparsity / clusterable training follow-up from topology_v14 (make
    tiles own disjoint row subsets → real area shrink; then layout-in-the-
    loss training). New, from Avery's topology question.

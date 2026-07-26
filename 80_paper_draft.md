@@ -38,10 +38,10 @@ programmable encoders wins on interference, forgetting, drift recovery, and
 power (flat in modality count). We demonstrate the full stack with PB-2, a
 printed talking-clock TTS chip (LPC-10, Speak&Spell lineage) that speaks all
 720 clock times through one fixed baked core: the core does not saturate as
-the vocabulary grows 17× (chip error flat at k-RMSE ≈ 0.084 while the
-software ceiling improves 23%), and memristor aging (physical t^−ν drift)
-degrades only the head — a global gain rescale recovers most of it, head
-recalibration all of it. The demonstrator is buildable as a 4-layer PCB plus
+the vocabulary grows 17× (chip error flat at k-RMSE 0.084 ± 0.003 while the
+software ceiling improves 24%; 8 seeds, 95% CI), and memristor aging
+(physical t^−ν drift) degrades only the head — a global gain rescale
+recovers ~70% of it, head recalibration all of it. The demonstrator is buildable as a 4-layer PCB plus
 a 14×12 mm sputtered memristor daughterboard.
 
 ---

@@ -41,8 +41,18 @@ Shipped:
   per-row letters, active ones light up; prev/now/next/pos block labels);
   Artifact republished at same URL.
 
-**NOT yet done / next:** error bars over multiple seeds for the drift +
-scaling curves (still the top paper blocker); citation hand-check;
+- Multi-seed error bars DONE (2026-07-25, `demo_pb2/seeds_v13.py`, 8 seeds,
+  per-seed splits): scaling no-saturation claim holds with 95% CIs (chip A
+  0.093→0.084, never up); **drift correction** — the 0.90→0.79 single-seed
+  drop was a per-week-redraw artifact; honest 12-week uncompensated
+  Δmelcorr −0.021±0.015, worst seed −0.048, monotone in all 8 seeds
+  (RESULTS_v13.md multi-seed section; paper §11 + abstract updated).
+- Paper figures pipeline DONE: `paper_figures/make_figures.py` → 7 figures
+  (power, latency, topology, IR, multimodal, scaling+CI, drift+CI), all
+  referenced from `80_paper_draft.md`; v12 nodal CSV copied to
+  `paper_figures/data/` for reproducible builds.
+
+**NOT yet done / next:** citation hand-check;
 group-sparsity clusterable-training follow-up (topology_v14). RC-causal
 streaming front end speced (`60_demo_and_paper_goals.md`) but not built.
 Full ordered list in `queue.md`. The v4-v12 investigation queue is secondary

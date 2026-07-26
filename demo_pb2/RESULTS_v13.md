@@ -79,16 +79,40 @@ This extends finding F4 (which used an ad-hoc relaxation) with the physical
 model the literature review asked for. Caveat: single seed; each week here
 uses an independent per-device draw (hence the gain-comp wiggle) — the viewer
 uses one fixed draw for smooth monotonic aging; average seeds before the paper.
+**Superseded by the multi-seed section below — the table above overstates the
+drop; keep it only as provenance for the demo audio.**
 The demo exposes this as a **"memristor aging" week slider**: because a1/a2
 are baked (drift-independent), the browser recomputes only the head + outputs
 live, so you watch the memristor tile degrade while L1/L2 stay frozen, and
 hear the chip at 0/4/8/12 weeks.
 
+## Multi-seed error bars (seeds_v13.py, 2026-07-25 — the paper numbers)
+8 seeds; each seed gets its own 85/15 utterance split, its own model
+init/shuffle stream, its own chip-A/B fab+write draws, a 40-utterance mel
+sample (vs 24), and — for drift — one fixed per-device ν draw reused at
+every week (`drift_head_nu`), which removes the per-week-redraw wiggle.
+Outputs: `results_v13_scaling_seeds.csv`, `drift_v13_seeds.csv`; figures
+`../paper_figures/fig_scaling.png`, `fig_drift.png` (mean ± 95% CI, t₇).
+
+Scaling (36 → 612 utts): float k-RMSE 0.0793±0.0016 → 0.0600±0.0012 (−24%);
+chip A 0.0933±0.0022 → 0.0841±0.0029 (never trends up); chip B statistically
+identical; melcorr 0.818±0.045 → 0.850±0.035. The no-saturation claim holds
+with CIs.
+
+Drift (paired Δ from week 0, within seed): uncompensated −0.0116±0.0108 at
+week 1, −0.0206±0.0152 at week 12 (worst seed −0.048), monotone decline in
+all 8 seeds; gain-comp −0.0063±0.0145 at week 12 (~70% recovered); recal
+exactly 0. **Correction:** the single-seed 0.90→0.79 drop above conflated
+per-week independent ν redraws with aging and landed on a tail draw — the
+honest uncompensated 12-week effect is ≈ −0.02 mean / −0.05 worst-seed.
+Milder, but monotone, seed-robust, and still fully consistent with the
+thesis (drift surface is only the 5% head).
+
 ## Honest caveats
-- **Single seed.** No error bars yet; the melspec-corr column is visibly
-  noisy (0.877–0.919) because it's a 24-utterance subsample. Before the
-  paper: repeat over ~8 seeds and widen the mel-eval sample for CIs. The
-  stable signal is the flat chip-A k-RMSE, which is the claim to lean on.
+- ~~Single seed~~ **resolved 2026-07-25** by seeds_v13 (8 seeds, per-seed
+  splits, 40-utt mel sample — section above). Remaining statistical caveat:
+  8 seeds is enough for the monotone/no-saturation claims, not for
+  fine-grained effect sizes; melcorr CI is still ±0.035-0.045 wide.
 - **Chip−float gap widens slightly** with scale (float improves, chip flat).
   Honest framing: baking/calibration overhead is a bounded additive cost, so
   as the achievable ceiling rises the chip captures a smaller *fraction* of
